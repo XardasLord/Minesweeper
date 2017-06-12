@@ -7,14 +7,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Minesweeper.Classes;
 
-namespace Minesweeper
+namespace Minesweeper.Forms
 {
-    public partial class Form1 : Form
+    public partial class Game : Form
     {
-        public Form1()
+        public Game()
         {
             InitializeComponent();
+
+            var engine = new GameEngine(GameEngine.DifficultyLevel.Begginer, this);
+            engine.Initialize();
         }
     }
 }
