@@ -3,3 +3,6 @@
 ################################################################################
 
 /Minesweeper/Minesweeper/bin/Debug
+/Minesweeper/Minesweeper/obj/Debug
+/Minesweeper/Minesweeper.Tests/bin/Debug
+/Minesweeper/Minesweeper.Tests/obj/Debug
