@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Minesweeper.Forms;
+using Minesweeper.Interfaces;
+using System.Windows.Forms;
 
 namespace Minesweeper.Classes
 {
@@ -16,7 +18,7 @@ namespace Minesweeper.Classes
         public int NumberOfMines { get; }
         public DifficultyLevel Level { get; }
 
-        private Tile[,] _tiles;
+        private ITile[,] _tiles;
         private Game _gameBoard;
 
         public enum DifficultyLevel
@@ -44,8 +46,8 @@ namespace Minesweeper.Classes
                     NumberOfMines = 40;
                     break;
                 case DifficultyLevel.Expert:
-                    Rows = 30;
-                    Columns = 16;
+                    Rows = 16;
+                    Columns = 30;
                     NumberOfMines = 99;
                     break;
                 default:
@@ -67,8 +69,11 @@ namespace Minesweeper.Classes
         public void Initialize()
         {
             _tiles = new Tile[Rows, Columns];
-            GenerateTiles();
+
+            ClearGameBoard();
             ResizeGameBoard();
+            GenerateTiles();
+            GenerateMines();
         }
 
         public void AddTile(Tile tile)
@@ -89,10 +94,41 @@ namespace Minesweeper.Classes
             }
         }
 
+        private void GenerateMines()
+        {
+            var random = new Random();
+            for(var i = 0; i < NumberOfMines; i++)
+            {
+                _tiles[random.Next(0, Rows - 1), random.Next(0, Columns - 1)].SetStatus(TileStatus.Mine);
+            }
+        }
+
+        private void ClearGameBoard()
+        {
+            _gameBoard.Controls.Clear();
+        }
+
         private void ResizeGameBoard()
         {
-            //TODO: Resize game board
-            var lastTile = _tiles[Rows - 1, Columns - 1];
+            _gameBoard.Size = new System.Drawing.Size(23 * Columns + 45, 23 * Rows + 80);
+        }
+
+        public void Tile_MouseClick(object sender, MouseEventArgs e)
+        {
+            if (_gameStarted == false)
+                _gameStarted = true;
+
+            ITile tile = (ITile)sender;
+            CheckClick(tile);
+        }
+
+        private void CheckClick(ITile tile)
+        {
+            if (tile.Status != TileStatus.Unflipped)
+                return;
+
+            //TODO: Check current tile and set specific status.
+
         }
     }
 }

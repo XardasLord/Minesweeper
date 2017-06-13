@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 using Minesweeper.Classes;
 
 namespace Minesweeper.Forms
@@ -17,7 +9,12 @@ namespace Minesweeper.Forms
         {
             InitializeComponent();
 
-            var engine = new GameEngine(GameEngine.DifficultyLevel.Begginer, this);
+            StartGame(GameEngine.DifficultyLevel.Begginer);
+        }
+
+        private void StartGame(GameEngine.DifficultyLevel level)
+        {
+            var engine = new GameEngine(level, this);
             engine.Initialize();
         }
     }
