@@ -113,22 +113,132 @@ namespace Minesweeper.Classes
             _gameBoard.Size = new System.Drawing.Size(23 * Columns + 45, 23 * Rows + 80);
         }
 
-        public void Tile_MouseClick(object sender, MouseEventArgs e)
+        public void CheckTile(object sender, MouseEventArgs e)
         {
             if (_gameStarted == false)
                 _gameStarted = true;
 
             ITile tile = (ITile)sender;
-            CheckClick(tile);
-        }
 
-        private void CheckClick(ITile tile)
-        {
+            if (tile.Status == TileStatus.Mine)
+            {
+                tile.SetStatus(TileStatus.ClickedMine);
+                GameOver();
+            }
+
             if (tile.Status != TileStatus.Unflipped)
                 return;
 
             //TODO: Check current tile and set specific status.
+            var mines = CountMinesOnNeighbourTiles(tile);
 
+            if (mines == 0)
+            {
+                tile.SetStatus(TileStatus.Clear);
+                //TODO: Discover tiles which have 0 mines on neighbour tiles.
+            }
+            else
+            {
+                tile.SetStatus(TileStatus.Warning, mines);
+            }
+        }
+
+        private int CountMinesOnNeighbourTiles(ITile tile)
+        {
+            var mines = 0;
+
+            var nextTile = GetNextTile(tile);
+            if (nextTile != null && nextTile.Status == TileStatus.Mine)
+                mines++;
+
+            var prevTile = GetPrevTile(tile);
+            if (prevTile != null && prevTile.Status == TileStatus.Mine)
+                mines++;
+
+            var upperTile = GetUpperTile(tile);
+            if (upperTile != null)
+            {
+                if (upperTile.Status == TileStatus.Mine)
+                    mines++;
+
+                var nextUpperTile = GetNextTile(upperTile);
+                if (nextUpperTile != null && nextUpperTile.Status == TileStatus.Mine)
+                    mines++;
+
+                var prevUpperTile = GetPrevTile(upperTile);
+                if (prevUpperTile != null && prevUpperTile.Status == TileStatus.Mine)
+                    mines++;
+            }
+
+            var lowerTile = GetLowerTile(tile);
+            if (lowerTile != null)
+            {
+                if (lowerTile.Status == TileStatus.Mine)
+                    mines++;
+
+                var nextLowerTile = GetNextTile(lowerTile);
+                if (nextLowerTile != null && nextLowerTile.Status == TileStatus.Mine)
+                    mines++;
+                var prevLowerTile = GetPrevTile(lowerTile);
+                if (prevLowerTile != null && prevLowerTile.Status == TileStatus.Mine)
+                    mines++;
+            }
+
+            return mines;
+        }
+
+        private ITile GetNextTile(ITile tile)
+        {
+            ITile nextTile = null;
+
+            if (tile.Column < Columns - 1)
+            {
+                nextTile = _tiles[tile.Row, tile.Column + 1];
+            }
+
+            return nextTile;
+        }
+
+        private ITile GetPrevTile(ITile tile)
+        {
+            ITile prevTile = null;
+
+            if (tile.Column > 0)
+            {
+                prevTile = _tiles[tile.Row, tile.Column - 1];
+            }
+
+            return prevTile;
+        }
+
+        private ITile GetUpperTile(ITile tile)
+        {
+            ITile upperTile = null;
+
+            if (tile.Row > 0)
+            {
+                upperTile = _tiles[tile.Row - 1, tile.Column];
+            }
+
+            return upperTile;
+        }
+
+        private ITile GetLowerTile(ITile tile)
+        {
+            ITile lowerTile = null;
+
+            if (tile.Row < Rows - 1)
+            {
+                lowerTile = _tiles[tile.Row + 1, tile.Column];
+            }
+
+            return lowerTile;
+        }
+
+        private void GameOver()
+        {
+            _gameStarted = false;
+            //TODO: Stop timer etc.
         }
     }
 }
