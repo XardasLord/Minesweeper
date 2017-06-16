@@ -2,12 +2,17 @@
 using Minesweeper.Forms;
 using Minesweeper.Interfaces;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Minesweeper.Classes
 {
     public class GameEngine
     {
-        private bool _gameStarted; 
+        private bool _gameStarted;
+        private bool _gameEnd;
+        private int _totalTilesToUnflip;
+        private int _unflippedTiles;
 
         public int Rows { get; }
         public int Columns { get; }
@@ -16,13 +21,6 @@ namespace Minesweeper.Classes
 
         private ITile[,] _tiles;
         private Game _gameBoard;
-
-        public enum DifficultyLevel
-        {
-            Begginer = 0,
-            Intermediate = 1,
-            Expert = 2
-        }
 
         public GameEngine(DifficultyLevel level, Game gameBoard)
         {
@@ -52,6 +50,8 @@ namespace Minesweeper.Classes
                     NumberOfMines = 10;
                     break;
             }
+            
+            _totalTilesToUnflip = Rows * Columns - NumberOfMines;
         }
 
         public GameEngine(int rows, int columns, int numbersOfMines, Game gameBoard)
@@ -60,21 +60,35 @@ namespace Minesweeper.Classes
             Columns = columns;
             NumberOfMines = numbersOfMines;
             _gameBoard = gameBoard;
+
+            _totalTilesToUnflip = Rows * Columns - NumberOfMines;
         }
 
         public void Initialize()
         {
             _tiles = new Tile[Rows, Columns];
+            _gameEnd = false;
+            _gameStarted = false;
 
             ClearGameBoard();
             ResizeGameBoard();
             GenerateTiles();
             GenerateMines();
         }
-
-        public void AddTile(Tile tile)
+        
+        private void ClearGameBoard()
         {
-            _tiles[tile.Row, tile.Column] = tile;
+            List<Tile> tiles = _gameBoard.Controls.OfType<Tile>().ToList();
+
+            foreach (var tile in tiles)
+            {
+                _gameBoard.Controls.Remove(tile);
+            }
+        }
+
+        private void ResizeGameBoard()
+        {
+            _gameBoard.Size = new System.Drawing.Size(23 * Columns + 45, 23 * Rows + 80);
         }
 
         private void GenerateTiles()
@@ -84,6 +98,7 @@ namespace Minesweeper.Classes
                 for(var j = 0; j < Columns; j++)
                 {
                     var tile = new Tile(i, j, this);
+                    AddTile(tile);
 
                     _gameBoard.Controls.Add(tile);
                 }
@@ -113,18 +128,16 @@ namespace Minesweeper.Classes
             }
         }
 
-        private void ClearGameBoard()
+        public void AddTile(ITile tile)
         {
-            _gameBoard.Controls.Clear();
-        }
-
-        private void ResizeGameBoard()
-        {
-            _gameBoard.Size = new System.Drawing.Size(23 * Columns + 45, 23 * Rows + 80);
+            _tiles[tile.Row, tile.Column] = tile;
         }
 
         public void CheckTile(object sender, MouseEventArgs e)
         {
+            if (_gameEnd)
+                return;
+
             if (_gameStarted == false)
                 _gameStarted = true;
 
@@ -132,7 +145,7 @@ namespace Minesweeper.Classes
 
             if (e.Button == MouseButtons.Right)
             {
-                if (tile.Status == TileStatus.Unflipped)
+                if (tile.Status == TileStatus.Unflipped || tile.Status == TileStatus.Mine)
                 {
                     tile.SetStatus(TileStatus.Flag);
                     return;
@@ -140,8 +153,10 @@ namespace Minesweeper.Classes
                 
                 if (tile.Status == TileStatus.Flag)
                 {
-                    tile.SetStatus(TileStatus.Unflipped);
-                    return;
+                    if (tile.HadMine)
+                        tile.SetStatus(TileStatus.Mine);
+                    else
+                        tile.SetStatus(TileStatus.Unflipped);
                 }
             }
             else
@@ -166,7 +181,13 @@ namespace Minesweeper.Classes
                 else
                 {
                     tile.SetStatus(TileStatus.Warning, mines);
+                    _unflippedTiles++;
                 }
+            }
+
+            if (CheckWin())
+            { 
+                Win();
             }
         }
 
@@ -183,6 +204,7 @@ namespace Minesweeper.Classes
             if (mines == 0)
             {
                 tile.SetStatus(TileStatus.Clear);
+                _unflippedTiles++;
 
                 var nextTile = GetNextTile(tile);
                 var prevTile = GetPrevTile(tile);
@@ -205,6 +227,7 @@ namespace Minesweeper.Classes
             else
             {
                 tile.SetStatus(TileStatus.Warning, mines);
+                _unflippedTiles++;
             }
         }
 
@@ -213,39 +236,39 @@ namespace Minesweeper.Classes
             var mines = 0;
 
             var nextTile = GetNextTile(tile);
-            if (nextTile != null && nextTile.Status == TileStatus.Mine)
+            if (nextTile != null && nextTile.HadMine)
                 mines++;
 
             var prevTile = GetPrevTile(tile);
-            if (prevTile != null && prevTile.Status == TileStatus.Mine)
+            if (prevTile != null && prevTile.HadMine)
                 mines++;
 
             var upperTile = GetUpperTile(tile);
             if (upperTile != null)
             {
-                if (upperTile.Status == TileStatus.Mine)
+                if (upperTile.HadMine)
                     mines++;
 
                 var nextUpperTile = GetNextTile(upperTile);
-                if (nextUpperTile != null && nextUpperTile.Status == TileStatus.Mine)
+                if (nextUpperTile != null && nextUpperTile.HadMine)
                     mines++;
 
                 var prevUpperTile = GetPrevTile(upperTile);
-                if (prevUpperTile != null && prevUpperTile.Status == TileStatus.Mine)
+                if (prevUpperTile != null && prevUpperTile.HadMine)
                     mines++;
             }
 
             var lowerTile = GetLowerTile(tile);
             if (lowerTile != null)
             {
-                if (lowerTile.Status == TileStatus.Mine)
+                if (lowerTile.HadMine)
                     mines++;
 
                 var nextLowerTile = GetNextTile(lowerTile);
-                if (nextLowerTile != null && nextLowerTile.Status == TileStatus.Mine)
+                if (nextLowerTile != null && nextLowerTile.HadMine)
                     mines++;
                 var prevLowerTile = GetPrevTile(lowerTile);
-                if (prevLowerTile != null && prevLowerTile.Status == TileStatus.Mine)
+                if (prevLowerTile != null && prevLowerTile.HadMine)
                     mines++;
             }
 
@@ -314,8 +337,51 @@ namespace Minesweeper.Classes
 
         private void GameOver()
         {
-            _gameStarted = false;
-            //TODO: Stop timer etc.
+            ShowAllMines();
+
+            _gameEnd = true;
+        }
+
+        private void ShowAllMines()
+        {
+            for (var i = 0; i < Rows; i++)
+            {
+                for (var j = 0; j < Columns; j++)
+                {
+                    if (_tiles[i, j].Status == TileStatus.Mine)
+                        _tiles[i, j].SetStatus(TileStatus.ClickedMine);
+                }
+            }
+        }
+
+        private void ShowAllFlags()
+        {
+            for (var i = 0; i < Rows; i++)
+            {
+                for (var j = 0; j < Columns; j++)
+                {
+                    if (_tiles[i, j].Status == TileStatus.Mine)
+                        _tiles[i, j].SetStatus(TileStatus.Flag);
+                }
+            }
+        }
+
+        private bool CheckWin()
+        {
+            var win = false;
+
+            if (_totalTilesToUnflip == _unflippedTiles)
+                win = true;
+
+            return win;
+        }
+
+        private void Win()
+        {
+            ShowAllFlags();
+            _gameEnd = true;
+
+            MessageBox.Show("Congratulations! You've won!", "Congratulations", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

@@ -7,15 +7,16 @@ namespace Minesweeper.Classes
 {
     public class Tile : Button, ITile
     {
+        private static readonly Color _default = Color.Gray;
         private static readonly Size _size = new Size(23, 23);
         public static readonly Point _startPos = new Point(13, 24);
         public static readonly int _margin = 2;
-        private static readonly Color _default = Color.Gray;
 
         public int Row { get; }
         public int Column { get; }
+        public bool HadMine { get; private set; }
+        public TileStatus Status { get; private set; }
         public GameEngine Engine { get; }
-        public TileStatus Status { get; set; }
 
         public Tile(int row, int column, GameEngine engine)
         {
@@ -28,10 +29,8 @@ namespace Minesweeper.Classes
             
             Size = _size;
             Location = new Point(_startPos.X + _size.Width * Column, _startPos.Y + _size.Height * Row);
-            BackColor = Color.Gray;
+            BackColor = _default;
             FlatStyle = FlatStyle.Flat;
-
-            Engine.AddTile(this);
         }
 
         public void SetStatus(TileStatus tileStatus, int warning = 0)
@@ -63,8 +62,10 @@ namespace Minesweeper.Classes
                     Status = TileStatus.Warning;
                     break;
                 case TileStatus.Mine:
-                    Text = "*";
+                    Text = String.Empty;
+                    BackColor = _default;
                     Status = TileStatus.Mine;
+                    HadMine = true;
                     break;
                 case TileStatus.ClickedMine:
                     Text = "X";

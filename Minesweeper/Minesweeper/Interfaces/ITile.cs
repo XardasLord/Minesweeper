@@ -6,7 +6,8 @@ namespace Minesweeper.Interfaces
     {
         int Row { get; }
         int Column { get; }
-        TileStatus Status { get; set; }
+        bool HadMine { get; }
+        TileStatus Status { get; }
         void SetStatus(TileStatus tileStatus, int warning = 0);
     }
 }
