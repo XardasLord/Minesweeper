@@ -10,6 +10,7 @@ namespace Minesweeper.Classes
         private static readonly Size _size = new Size(23, 23);
         public static readonly Point _startPos = new Point(13, 24);
         public static readonly int _margin = 2;
+        private static readonly Color _default = Color.Gray;
 
         public int Row { get; }
         public int Column { get; }
@@ -23,10 +24,11 @@ namespace Minesweeper.Classes
             Engine = engine;
             Status = TileStatus.Unflipped;
 
-            MouseClick += Engine.CheckTile;
+            MouseUp += Engine.CheckTile;
             
             Size = _size;
             Location = new Point(_startPos.X + _size.Width * Column, _startPos.Y + _size.Height * Row);
+            BackColor = Color.Gray;
             FlatStyle = FlatStyle.Flat;
 
             Engine.AddTile(this);
@@ -38,11 +40,12 @@ namespace Minesweeper.Classes
             {
                 case TileStatus.Unflipped:
                     Text = String.Empty;
+                    BackColor = _default;
                     Status = TileStatus.Unflipped;
                     break;
                 case TileStatus.Clear:
                     Text = String.Empty;
-                    BackColor = Color.Gray;
+                    BackColor = Color.White;
                     Status = TileStatus.Clear;
                     break;
                 case TileStatus.Flag:
@@ -56,7 +59,7 @@ namespace Minesweeper.Classes
                     break;
                 case TileStatus.Warning:
                     Text = warning.ToString();
-                    BackColor = Color.Gray;
+                    BackColor = Color.White;
                     Status = TileStatus.Warning;
                     break;
                 case TileStatus.Mine:

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Minesweeper.Forms;
 using Minesweeper.Interfaces;
 using System.Windows.Forms;
@@ -97,9 +93,23 @@ namespace Minesweeper.Classes
         private void GenerateMines()
         {
             var random = new Random();
+            var planted = false;
+
             for(var i = 0; i < NumberOfMines; i++)
             {
-                _tiles[random.Next(0, Rows - 1), random.Next(0, Columns - 1)].SetStatus(TileStatus.Mine);
+                planted = false;
+
+                while (!planted)
+                {
+                    var row = random.Next(0, Rows - 1);
+                    var colmn = random.Next(0, Columns - 1);
+
+                    if (_tiles[row, colmn].Status == TileStatus.Mine)
+                        continue;
+
+                    _tiles[row, colmn].SetStatus(TileStatus.Mine);
+                    planted = true;
+                }
             }
         }
 
@@ -120,22 +130,77 @@ namespace Minesweeper.Classes
 
             ITile tile = (ITile)sender;
 
-            if (tile.Status == TileStatus.Mine)
+            if (e.Button == MouseButtons.Right)
             {
-                tile.SetStatus(TileStatus.ClickedMine);
-                GameOver();
+                if (tile.Status == TileStatus.Unflipped)
+                {
+                    tile.SetStatus(TileStatus.Flag);
+                    return;
+                }
+                
+                if (tile.Status == TileStatus.Flag)
+                {
+                    tile.SetStatus(TileStatus.Unflipped);
+                    return;
+                }
             }
+            else
+            {
+                if (tile.Status == TileStatus.Mine)
+                {
+                    tile.SetStatus(TileStatus.ClickedMine);
+                    GameOver();
+
+                    return;
+                }
+
+                if (tile.Status != TileStatus.Unflipped)
+                    return;
+                
+                var mines = CountMinesOnNeighbourTiles(tile);
+
+                if (mines == 0)
+                {
+                    UnflipNeighbourTiles(tile);
+                }
+                else
+                {
+                    tile.SetStatus(TileStatus.Warning, mines);
+                }
+            }
+        }
+
+        private void UnflipNeighbourTiles(ITile tile)
+        {
+            // Unflip all tiles which have 0 mines on neighbour tiles.
+            if (tile == null)
+                return;
 
             if (tile.Status != TileStatus.Unflipped)
                 return;
 
-            //TODO: Check current tile and set specific status.
             var mines = CountMinesOnNeighbourTiles(tile);
-
             if (mines == 0)
             {
                 tile.SetStatus(TileStatus.Clear);
-                //TODO: Discover tiles which have 0 mines on neighbour tiles.
+
+                var nextTile = GetNextTile(tile);
+                var prevTile = GetPrevTile(tile);
+                var upperTile = GetUpperTile(tile);
+                var nextUpperTile = GetNextTile(upperTile);
+                var prevUpperTile = GetPrevTile(upperTile);
+                var lowerTile = GetLowerTile(tile);
+                var nextLowerTile = GetNextTile(lowerTile);
+                var prevLowerTile = GetPrevTile(lowerTile);
+
+                UnflipNeighbourTiles(nextTile);
+                UnflipNeighbourTiles(prevTile);
+                UnflipNeighbourTiles(upperTile);
+                UnflipNeighbourTiles(nextUpperTile);
+                UnflipNeighbourTiles(prevUpperTile);
+                UnflipNeighbourTiles(lowerTile);
+                UnflipNeighbourTiles(nextLowerTile);
+                UnflipNeighbourTiles(prevLowerTile);
             }
             else
             {
@@ -191,6 +256,9 @@ namespace Minesweeper.Classes
         {
             ITile nextTile = null;
 
+            if (tile == null)
+                return nextTile;
+
             if (tile.Column < Columns - 1)
             {
                 nextTile = _tiles[tile.Row, tile.Column + 1];
@@ -202,6 +270,9 @@ namespace Minesweeper.Classes
         private ITile GetPrevTile(ITile tile)
         {
             ITile prevTile = null;
+
+            if (tile == null)
+                return prevTile;
 
             if (tile.Column > 0)
             {
@@ -215,6 +286,9 @@ namespace Minesweeper.Classes
         {
             ITile upperTile = null;
 
+            if (tile == null)
+                return upperTile;
+
             if (tile.Row > 0)
             {
                 upperTile = _tiles[tile.Row - 1, tile.Column];
@@ -226,6 +300,9 @@ namespace Minesweeper.Classes
         private ITile GetLowerTile(ITile tile)
         {
             ITile lowerTile = null;
+
+            if (tile == null)
+                return lowerTile;
 
             if (tile.Row < Rows - 1)
             {
