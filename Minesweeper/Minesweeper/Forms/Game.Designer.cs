@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Game));
             this.mspMenu = new System.Windows.Forms.MenuStrip();
             this.gameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.btnBegginer = new System.Windows.Forms.ToolStripMenuItem();
@@ -109,6 +110,7 @@
             this.ClientSize = new System.Drawing.Size(284, 261);
             this.Controls.Add(this.mspMenu);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.mspMenu;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
