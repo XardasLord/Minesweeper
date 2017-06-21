@@ -18,7 +18,7 @@ namespace Minesweeper.Forms
         {
             if (ValidateInput(txtRows.Text) && ValidateInput(txtColumns.Text) && ValidateInput(txtMines.Text))
             {
-                if (CheckMaxNumberOfMines())
+                if (CheckMaxSize() && CheckMaxNumberOfMines())
                 {
                     DialogResult = DialogResult.OK;
                 }
@@ -33,6 +33,19 @@ namespace Minesweeper.Forms
             if (!int.TryParse(text, out parsedValue))
             {
                 MessageBox.Show("You have to type numbers.", "Only numbers allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        private bool CheckMaxSize()
+        {
+            bool valid = true;
+
+            if (Rows > 30 || Columns > 30)
+            {
+                MessageBox.Show("Maximum allowed map size is: 30x30.", "Maximum map size", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 valid = false;
             }
 
